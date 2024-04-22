@@ -1,11 +1,11 @@
 ### Hi there 👋
+안녕하세요. 김동현입니다.
 
 <!--
 **KIM0212DH/KIM0212DH** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
 Here are some ideas to get you started:
 
-안녕하세요. 김동현입니다.
 - 🔭 I’m currently working on ...
 - 🌱 I’m currently learning ...
 - 👯 I’m looking to collaborate on ...
