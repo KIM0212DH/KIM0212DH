@@ -10,7 +10,8 @@
 결과: vix_nasdaq_kospi.html (브라우저로 열기, 줌/호버 가능)
 
 데이터: Yahoo Finance (yfinance)
-    ^VIX  : CBOE Volatility Index
+    ^VIX  : CBOE Volatility Index (S&P 500 옵션 기반)
+    ^VXN  : CBOE NASDAQ-100 Volatility Index (나스닥100 옵션 기반, 2001-01-23~)
     ^IXIC : NASDAQ Composite
     ^KS11 : KOSPI Composite
     VKOSPI: KRX Open API (krx_vkospi.py, 인증키 KRX_API_KEY)
@@ -25,8 +26,9 @@ from plotly.subplots import make_subplots
 
 from krx_vkospi import load_vkospi, verify
 
-TICKERS = {"^VIX": "VIX", "^IXIC": "NASDAQ", "^KS11": "KOSPI"}
-COLORS = {"VIX": "#d62728", "NASDAQ": "#1f77b4", "KOSPI": "#2ca02c", "VKOSPI": "#9467bd"}
+TICKERS = {"^VIX": "VIX", "^VXN": "VXN", "^IXIC": "NASDAQ", "^KS11": "KOSPI"}
+COLORS = {"VIX": "#d62728", "VXN": "#ff7f0e", "NASDAQ": "#1f77b4", "KOSPI": "#2ca02c",
+          "VKOSPI": "#9467bd"}
 # VIX 해석 구간 (관행적 기준선)
 VIX_LEVELS = [(20, "20: 경계"), (30, "30: 공포")]
 
@@ -53,6 +55,7 @@ def correlation_report(closes):
     kospi_next = r["KOSPI"].dropna().shift(-1).reindex(r.index)
     rows = [
         ("VIX vs NASDAQ (동일일)", r["VIX"].corr(r["NASDAQ"])),
+        ("VXN vs NASDAQ (동일일)", r["VXN"].corr(r["NASDAQ"])),
         ("VIX vs KOSPI (동일일)", r["VIX"].corr(r["KOSPI"])),
         ("VIX(t) vs KOSPI(t+1)", r["VIX"].corr(kospi_next)),
         ("NASDAQ vs KOSPI (동일일)", r["NASDAQ"].corr(r["KOSPI"])),
@@ -70,7 +73,7 @@ def correlation_report(closes):
 
 def build_figure(closes, corr_rows):
     has_vkospi = "VKOSPI" in closes
-    titles = ["VIX (공포지수)", "NASDAQ Composite", "KOSPI",
+    titles = ["VIX · VXN (공포지수)", "NASDAQ Composite", "KOSPI",
               "정규화 비교 (시작일 = 100, VIX는 우측 축)"]
     specs = [[{}], [{}], [{}], [{"secondary_y": True}]]
     heights = [0.22, 0.22, 0.22, 0.34]
@@ -87,6 +90,9 @@ def build_figure(closes, corr_rows):
         fig.add_trace(go.Scatter(x=closes.index, y=closes[name], name=name,
                                  line=dict(color=COLORS[name], width=1.5),
                                  legendgroup=name), row=row, col=1)
+
+    fig.add_trace(go.Scatter(x=closes.index, y=closes["VXN"], name="VXN",
+                             line=dict(color=COLORS["VXN"], width=1, dash="dot")), row=1, col=1)
 
     for level, label in VIX_LEVELS:
         fig.add_hline(y=level, line=dict(color="gray", dash="dot", width=1),
@@ -151,7 +157,8 @@ def main():
         raw = raw.join(vkospi, how="outer")
     corr_rows = correlation_report(raw)
     # 한·미 휴장일이 달라 날짜가 어긋나므로, 차트용으로는 직전 값으로 채움
-    closes = raw.ffill().dropna()
+    # VXN(2001~)·VKOSPI(2009~)는 늦게 시작하므로 기준 세 지수로만 시작일을 정함
+    closes = raw.ffill().dropna(subset=["VIX", "NASDAQ", "KOSPI"])
     for k, v in corr_rows:
         print(f"{k:28s} {v:+.3f}")
 

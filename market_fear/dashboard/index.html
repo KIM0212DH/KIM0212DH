@@ -1,0 +1,660 @@
+<style>
+.vx { display: flex; flex-direction: column; gap: var(--cds-gap-lg); font-family: var(--font-anthropic-sans); max-width: 72rem; margin-inline: auto; }
+.vx-head { display: flex; flex-direction: column; gap: var(--cds-gap-xs); }
+.vx-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.vx-take { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-body); max-width: 65ch; }
+.vx-take b { font-weight: 600; color: var(--color-fg); }
+.vx-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--cds-gap-md); }
+.vx-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); min-width: 0; display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+.vx-tile { display: flex; flex-direction: column; gap: var(--cds-gap-xs); min-width: 0; }
+.vx-tile-label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); letter-spacing: .02em; display: flex; align-items: center; gap: var(--cds-gap-xs); }
+.vx-sw { width: .625rem; height: .625rem; border-radius: 50%; display: inline-block; flex: none; }
+.vx-big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.vx-sub { font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; display: flex; gap: var(--cds-gap-sm); flex-wrap: wrap; align-items: center; }
+.vx-pill { font-size: var(--cds-font-size-caption); padding: 1px var(--cds-pad-sm); border-radius: 999px; border: 1px solid currentColor; }
+.vx-ok { color: var(--color-ok); } .vx-warn { color: var(--color-warn); } .vx-bad { color: var(--color-bad); } .vx-muted { color: var(--color-fg-muted); }
+.vx-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--cds-gap-sm); flex-wrap: wrap; }
+.vx-h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.vx-h3 { font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.vx-note { margin: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); max-width: 70ch; }
+.vx-seg { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; }
+.vx-seg button { font: inherit; font-size: var(--cds-font-size-caption); background: transparent; color: var(--color-fg-muted); border: 0; padding: var(--cds-pad-xs) var(--cds-pad-sm); cursor: pointer; }
+.vx-seg button + button { border-left: 1px solid var(--color-border-line); }
+.vx-seg button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
+.vx-seg button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: -2px; }
+.vx-chart { position: relative; min-height: 340px; touch-action: pan-y; }
+.vx-chart.vx-vv { min-height: 280px; }
+.vx-chart svg { display: block; overflow: visible; }
+.vx-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; white-space: nowrap; display: flex; flex-direction: column; gap: 2px; }
+.vx-tip .vx-tip-d { color: var(--cds-text-secondary); }
+.vx-tip .vx-tip-r { display: flex; align-items: center; gap: var(--cds-gap-xs); }
+.vx-tip .vx-tip-r b { margin-left: auto; padding-left: var(--cds-pad-sm); font-weight: 600; }
+.vx-tablebox { overflow-x: auto; }
+.vx-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.vx-table th, .vx-table td { text-align: left; padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.vx-table th { color: var(--color-fg-muted); font-weight: 500; }
+.vx-table td.vx-num, .vx-table th.vx-num { text-align: right; }
+.vx-table tr.vx-hi td { background: color-mix(in srgb, var(--color-warn) 10%, transparent); }
+.vx-table tr.vx-base td { color: var(--color-fg-muted); border-top: 2px solid var(--color-border-line); }
+.vx-cbar { display: inline-block; width: 4rem; height: .5rem; position: relative; vertical-align: middle; margin-left: var(--cds-gap-xs); background: var(--cds-chart-grid); border-radius: 2px; }
+.vx-cbar i { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+.vx-cbar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--cds-chart-axis); }
+.vx-gloss { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); margin: 0; }
+.vx-gloss dt { font-weight: 600; }
+.vx-gloss dd { margin: 0 0 var(--cds-gap-sm); color: var(--color-fg-muted); }
+.vx-wait { display: flex; align-items: center; justify-content: center; text-align: center; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); min-height: inherit; border: 1px dashed var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md); }
+.vx-fail { display: flex; align-items: center; justify-content: center; gap: var(--cds-gap-xs); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); min-height: inherit; }
+.vx-fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+.vx-sticky { position: sticky; top: 0; z-index: 2; background: var(--color-bg); padding-block: var(--cds-pad-xs); }
+[data-dash-source-state=empty] { color: transparent; }
+[data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+</style>
+
+<div class="vx">
+  <header class="vx-head">
+    <h1 class="vx-title">공포가 클 때 사면 저점일까</h1>
+    <p class="vx-take" id="vx-take"><span class="dash-skeleton" data-source="fear" data-field="pct" data-where="index=VIX">—</span></p>
+  </header>
+
+  <div class="vx-bar vx-sticky">
+    <span class="vx-note">차트 기간</span>
+    <div class="vx-seg" role="group" aria-label="차트 기간">
+      <button type="button" data-y="1">1년</button>
+      <button type="button" data-y="5">5년</button>
+      <button type="button" data-y="10">10년</button>
+      <button type="button" data-y="0" aria-pressed="true">전체</button>
+    </div>
+  </div>
+
+  <section class="vx-card" id="pair-us">
+    <div class="vx-bar">
+      <h2 class="vx-h2" id="us-title">나스닥 × VIX</h2>
+      <div class="vx-seg" role="group" aria-label="나스닥에 맞출 공포지수" id="us-fear">
+        <button type="button" data-f="VIX" aria-pressed="true">VIX (S&amp;P 500)</button>
+        <button type="button" data-f="VXN">VXN (나스닥100)</button>
+      </div>
+    </div>
+    <div class="vx-tiles">
+      <div class="vx-tile">
+        <div class="vx-tile-label"><span class="vx-sw" id="sw-NASDAQ"></span>나스닥 종합 · 마지막 거래일</div>
+        <div class="vx-big dash-skeleton" data-source="latest" data-field="close" data-where="index=NASDAQ" id="big-NASDAQ">—</div>
+        <div class="vx-sub"><span class="dash-skeleton" data-source="latest" data-field="chg" data-where="index=NASDAQ" id="chg-NASDAQ">—</span><span class="vx-muted" id="date-NASDAQ"></span></div>
+      </div>
+      <div class="vx-tile">
+        <div class="vx-tile-label"><span class="vx-sw" id="sw-VIX"></span>VIX 공포지수 · 역대 분포에서의 위치</div>
+        <div class="vx-big dash-skeleton" data-source="latest" data-field="close" data-where="index=VIX" id="big-VIX">—</div>
+        <div class="vx-sub"><span class="dash-skeleton" data-source="fear" data-field="pct" data-where="index=VIX" id="pct-VIX">—</span><span id="zone-VIX"></span></div>
+      </div>
+      <div class="vx-tile">
+        <div class="vx-tile-label"><span class="vx-sw" id="sw-VXN"></span>VXN 나스닥100 변동성 · 역대 분포에서의 위치</div>
+        <div class="vx-big dash-skeleton" data-source="latest" data-field="close" data-where="index=VXN" id="big-VXN">—</div>
+        <div class="vx-sub"><span class="dash-skeleton" data-source="fear" data-field="pct" data-where="index=VXN" id="pct-VXN">—</span></div>
+      </div>
+    </div>
+    <p class="vx-note" id="us-note">위: 나스닥(로그 축). 아래: 선택한 공포지수와 '상위 20%' 기준선. 음영은 공포지수가 그 기준선 이상이던 날, 즉 가설상 '매수 후보일'입니다. VIX는 1990년부터, VXN은 2001년부터라 표의 계산 기간이 다릅니다.</p>
+    <div class="vx-chart" id="chart-us" data-source="prices fear"></div>
+    <h3 class="vx-h3" id="us-h3">그날 샀다면: VIX 구간별 이후 평균 수익률</h3>
+    <div class="vx-tablebox">
+      <table class="vx-table" data-source="fwd" data-row-key="key" id="fwd-us">
+        <thead><tr>
+          <th data-field="bucket" id="us-th">VIX 구간</th>
+          <th class="vx-num" data-field="range">범위</th>
+          <th class="vx-num" data-field="r1m">1개월</th>
+          <th class="vx-num" data-field="r3m">3개월</th>
+          <th class="vx-num" data-field="r6m">6개월</th>
+          <th class="vx-num" data-field="r1y">1년</th>
+          <th class="vx-num" data-field="up1y">1년 뒤 상승 비율</th>
+          <th class="vx-num" data-field="n">표본(일)</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="vx-note" id="span-us"></p>
+  </section>
+
+  <section class="vx-card" id="pair-kr">
+    <h2 class="vx-h2">코스피 × VKOSPI</h2>
+    <div class="vx-tiles">
+      <div class="vx-tile">
+        <div class="vx-tile-label"><span class="vx-sw" id="sw-KOSPI"></span>코스피 · 마지막 거래일</div>
+        <div class="vx-big dash-skeleton" data-source="latest" data-field="close" data-where="index=KOSPI" id="big-KOSPI">—</div>
+        <div class="vx-sub"><span class="dash-skeleton" data-source="latest" data-field="chg" data-where="index=KOSPI" id="chg-KOSPI">—</span><span class="vx-muted" id="date-KOSPI"></span></div>
+      </div>
+      <div class="vx-tile">
+        <div class="vx-tile-label"><span class="vx-sw" id="sw-VKOSPI"></span>VKOSPI 코스피200 변동성 · 역대 분포에서의 위치</div>
+        <div class="vx-big" id="big-VKOSPI">—</div>
+        <div class="vx-sub"><span class="vx-muted" id="pct-VKOSPI">데이터 대기 중</span></div>
+      </div>
+    </div>
+    <p class="vx-note">위: 코스피(로그 축). 아래: VKOSPI와 '상위 20%' 기준선. VKOSPI는 KRX Open API 인증키를 등록하면 채워집니다.</p>
+    <div class="vx-chart" id="chart-kr" data-source="prices fear"></div>
+    <h3 class="vx-h3">그날 샀다면: VKOSPI 구간별 이후 평균 수익률</h3>
+    <div class="vx-tablebox">
+      <table class="vx-table" data-source="fwd" data-row-key="key" id="fwd-kr">
+        <thead><tr>
+          <th data-field="bucket">VKOSPI 구간</th>
+          <th class="vx-num" data-field="range">범위</th>
+          <th class="vx-num" data-field="r1m">1개월</th>
+          <th class="vx-num" data-field="r3m">3개월</th>
+          <th class="vx-num" data-field="r6m">6개월</th>
+          <th class="vx-num" data-field="r1y">1년</th>
+          <th class="vx-num" data-field="up1y">1년 뒤 상승 비율</th>
+          <th class="vx-num" data-field="n">표본(일)</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="vx-note" id="span-kr"></p>
+  </section>
+
+  <section class="vx-card" id="method">
+    <h2 class="vx-h2">표 읽는 법과 한계</h2>
+    <dl class="vx-gloss">
+      <div><dt>구간(5분위)</dt><dd>공포지수의 일별 값을 작은 것부터 줄 세워 같은 개수씩 다섯 묶음으로 나눈 것입니다. '높음(상위 20%)'은 그 지수 역사에서 가장 겁먹었던 날들 20%입니다. VIX와 VKOSPI는 평소 수준이 달라서, 고정 숫자(예: 30) 대신 각자의 분위로 비교합니다.</dd></div>
+      <div><dt>이후 수익률</dt><dd>그날 종가에 사서 21·63·126·252 거래일(약 1·3·6·12개월) 뒤 종가에 팔았을 때의 지수 수익률 평균입니다. 배당은 빠진 가격지수 기준입니다.</dd></div>
+      <div><dt>표본이 겹친다</dt><dd>연속한 날들은 1년 보유 기간이 거의 겹치므로, 표본 일수만큼 독립적인 관측이 있는 게 아닙니다. 공포가 큰 날은 2000–02년, 2008–09년, 2020년, 2022년 같은 몇 번의 사건에 몰려 있어 실제 독립 사례는 손에 꼽을 정도입니다.</dd></div>
+      <div><dt>시기에 따라 결론이 바뀐다</dt><dd>공포가 큰 날 사도 하락장 초입이면 더 떨어질 수 있습니다(예: 닷컴 붕괴, 2022년). 위 차트 기간을 바꿔 음영 뒤의 흐름을 직접 확인해 보세요. 표는 차트 기간과 상관없이 데이터 전체 기간으로 계산합니다.</dd></div>
+      <div><dt>최근 1년은 1년 수익률 없음</dt><dd>아직 1년이 지나지 않은 날은 1년 수익률 계산에서 빠집니다. 표본(일)은 3개월 수익률 기준 일수입니다.</dd></div>
+    </dl>
+  </section>
+
+  <section class="vx-card" id="vv-card">
+    <h2 class="vx-h2">VIX vs VKOSPI, 같은 축에서</h2>
+    <p class="vx-note">두 지수 모두 옵션 가격으로 계산한 향후 30일 기대변동성(연율 %)이라 같은 축에 겹쳐 볼 수 있습니다. VKOSPI만 크게 뛴 구간은 미국발이 아닌 한국 고유의 불안을 뜻합니다. 음영은 2026년 6월입니다.</p>
+    <div class="vx-chart vx-vv" id="vv" data-source="prices"></div>
+  </section>
+
+  <section class="vx-card" id="corr-card">
+    <h2 class="vx-h2">얼마나 같이 움직이나</h2>
+    <p class="vx-note">일간 변화율의 피어슨 상관계수(데이터 전체 기간)입니다. −1이면 정반대, +1이면 똑같이 움직입니다. 코스피는 미국장이 열리기 전에 마감하므로, 미국의 t일 움직임은 한국의 다음 거래일에 반영됩니다.</p>
+    <div class="vx-tablebox">
+      <table class="vx-table" data-source="corr" data-row-key="pair">
+        <thead><tr>
+          <th data-field="pair">비교</th>
+          <th data-field="basis">기준</th>
+          <th class="vx-num" data-field="corr">상관계수</th>
+          <th class="vx-num" data-field="n">표본(일)</th>
+        </tr></thead>
+        <tbody id="corr-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="vx-card" id="gloss">
+    <h2 class="vx-h2">용어</h2>
+    <dl class="vx-gloss">
+      <div><dt>VIX (CBOE Volatility Index)</dt><dd>시카고옵션거래소(CBOE)가 S&amp;P 500 지수 옵션 가격으로 계산하는, 앞으로 30일간 시장이 예상하는 변동성(연율 %)입니다. 급락기에 하락 대비용 풋옵션 수요가 몰리면 오르기 때문에 '공포지수'라고 부릅니다. 나스닥 전용으로는 VXN이 따로 있습니다.</dd></div>
+      <div><dt>VXN (CBOE NASDAQ-100 Volatility Index)</dt><dd>CBOE가 나스닥100 지수 옵션 가격으로 계산하는 향후 30일 기대변동성(연율 %)으로, 2001년 1월부터 데이터가 있습니다. 나스닥100은 나스닥 상장 비금융 대형주 100개라 이 대시보드의 나스닥 종합지수와 구성은 다르지만 움직임은 매우 비슷합니다.</dd></div>
+      <div><dt>VKOSPI (코스피200 변동성지수)</dt><dd>한국거래소(KRX)가 2009년 4월 13일부터 공식 발표하는 지수로, 코스피200 옵션 가격으로 계산한 앞으로 30일간의 기대변동성(연율 %)입니다. VIX와 같은 계열이라 '한국판 VIX'로 불립니다.</dd></div>
+      <div><dt>기준선 20 / 30 (VIX)</dt><dd>시장에서 흔히 쓰는 관행적 구간입니다. 20 미만은 안정, 20~30은 경계, 30 이상은 공포로 읽습니다. 통계적으로 정해진 임계값은 아닙니다.</dd></div>
+      <div><dt>NASDAQ Composite (^IXIC) · KOSPI (^KS11)</dt><dd>각각 나스닥 거래소 상장 보통주 전체, 한국거래소 유가증권시장 상장 종목 전체의 시가총액 가중 가격지수입니다.</dd></div>
+      <div><dt>데이터</dt><dd>VIX·나스닥은 1990년부터, VXN은 2001년 1월부터, 코스피는 1996년 12월부터의 Yahoo Finance 일별 종가입니다. VKOSPI는 KRX Open API(한국거래소 공식 데이터 API) 인증키를 받으면 추가됩니다. 빈 날짜는 해당 시장의 휴장일입니다.</dd></div>
+    </dl>
+  </section>
+</div>
+
+<script>
+// 숫자 변환: CSV 빈칸(휴장일)은 null
+window.vxNum = (v) => (v === '' || v == null || isNaN(+v)) ? null : +v;
+window.vxKeys = ['VIX', 'NASDAQ', 'KOSPI', 'VKOSPI', 'VXN'];
+window.vxNames = { VIX: 'VIX', NASDAQ: '나스닥', KOSPI: '코스피', VKOSPI: 'VKOSPI', VXN: 'VXN' };
+window.vxPeriod = 0; // 0 = 전체
+
+dash.calc('latest', {
+  title: '지수별 마지막 종가',
+  description: '각 지수가 실제로 거래된 마지막 두 날의 종가와 전일 대비 변화율. VKOSPI는 데이터에 있을 때만.',
+  inputs: ['prices'],
+  fn: (prices) => ['VIX', 'VXN', 'NASDAQ', 'KOSPI', 'VKOSPI'].filter((k) => prices.some((r) => r[k] !== '' && r[k] != null)).map((index) => {
+    const pts = prices.filter((r) => r[index] !== '' && r[index] != null);
+    const a = pts[pts.length - 2], b = pts[pts.length - 1];
+    return { index, date: b.Date, close: +b[index], chg: +b[index] / +a[index] - 1 };
+  }),
+});
+
+dash.calc('fear', {
+  title: '공포지수 분위 기준',
+  description: 'VIX·VXN·VKOSPI 일별 값 전체 기간의 5분위 경계(20·40·60·80%), 최솟값·최댓값, 마지막 값이 역대 몇 % 위치인지.',
+  inputs: ['prices'],
+  fn: (prices) => ['VIX', 'VXN', 'VKOSPI'].map((index) => {
+    const pts = prices.filter((r) => r[index] !== '' && r[index] != null);
+    if (!pts.length) return { index, n: 0, close: null, date: null, pct: null, min: null, q20: null, q40: null, q60: null, q80: null, max: null, start: null, end: null };
+    const v = pts.map((r) => +r[index]).sort((a, b) => a - b);
+    const q = (p) => { const h = (v.length - 1) * p, lo = Math.floor(h); return v[lo] + (v[Math.min(lo + 1, v.length - 1)] - v[lo]) * (h - lo); };
+    const last = +pts[pts.length - 1][index];
+    return { index, n: v.length, close: last, date: pts[pts.length - 1].Date, pct: v.filter((x) => x <= last).length / v.length,
+      min: v[0], q20: q(0.2), q40: q(0.4), q60: q(0.6), q80: q(0.8), max: v[v.length - 1], start: pts[0].Date, end: pts[pts.length - 1].Date };
+  }),
+});
+
+dash.calc('fwd', {
+  title: '공포 구간별 이후 수익률',
+  description: '공포지수 5분위 구간마다, 그날 지수 종가에 사서 21·63·126·252 거래일 뒤 팔았을 때의 평균 수익률과 1년 뒤 상승 비율. 마지막 줄은 전체 기간 기준.',
+  inputs: ['prices', 'fear'],
+  fn: (prices, fear) => {
+    const H = { r1m: 21, r3m: 63, r6m: 126, r1y: 252 };
+    const out = [];
+    [['NASDAQ', 'VIX', '나스닥 × VIX'], ['NASDAQ', 'VXN', '나스닥 × VXN'], ['KOSPI', 'VKOSPI', '코스피 × VKOSPI']].forEach(([idx, fk, pair]) => {
+      const e = fear.find((f) => f.index === fk);
+      if (!e || !e.n) { out.push({ key: fk + '-wait', pair, bucket: '데이터 대기', range: null, r1m: null, r3m: null, r6m: null, r1y: null, up1y: null, n: null }); return; }
+      const pts = prices.filter((r) => r[idx] !== '' && r[idx] != null);
+      const edges = [e.q20, e.q40, e.q60, e.q80];
+      const acc = [1, 2, 3, 4, 5, 0].map(() => ({ s: { r1m: 0, r3m: 0, r6m: 0, r1y: 0 }, c: { r1m: 0, r3m: 0, r6m: 0, r1y: 0 }, up: 0 }));
+      pts.forEach((r, i) => {
+        if (r[fk] === '' || r[fk] == null) return;
+        const f = +r[fk];
+        const b = edges.filter((x) => f > x).length; // 0..4
+        Object.entries(H).forEach(([k, h]) => {
+          if (i + h >= pts.length) return;
+          const ret = +pts[i + h][idx] / +r[idx] - 1;
+          [acc[b], acc[5]].forEach((a) => { a.s[k] += ret; a.c[k] += 1; if (k === 'r1y' && ret > 0) a.up += 1; });
+        });
+      });
+      const lo = [e.min, e.q20, e.q40, e.q60, e.q80], hi = [e.q20, e.q40, e.q60, e.q80, e.max];
+      const names = ['낮음 (하위 20%)', '2분위', '3분위', '4분위', '높음 (상위 20%)', '전체 기간 (기준)'];
+      acc.forEach((a, b) => {
+        const m = (k) => a.c[k] ? a.s[k] / a.c[k] : null;
+        out.push({ key: b === 5 ? fk + '-all' : fk + '-Q' + (b + 1), pair, bucket: names[b],
+          range: b === 5 ? e.min.toFixed(1) + ' – ' + e.max.toFixed(1) : lo[b].toFixed(1) + ' – ' + hi[b].toFixed(1),
+          r1m: m('r1m'), r3m: m('r3m'), r6m: m('r6m'), r1y: m('r1y'), up1y: a.c.r1y ? a.up / a.c.r1y : null, n: a.c.r3m });
+      });
+    });
+    return out;
+  },
+});
+
+dash.calc('corr', {
+  title: '일간 변화율 상관계수',
+  description: '각 지수의 실제 거래일 기준 일간 변화율로 계산한 피어슨 상관계수. 한국 지표 1일 지연 포함.',
+  inputs: ['prices'],
+  fn: (prices) => {
+    const ret = (k) => {
+      const out = new Map(); let prev = null; const days = [];
+      for (const r of prices) {
+        if (r[k] === '' || r[k] == null) continue;
+        if (prev != null) out.set(r.Date, +r[k] / prev - 1);
+        prev = +r[k]; days.push(r.Date);
+      }
+      return { out, days };
+    };
+    const V = ret('VIX'), X = ret('VXN'), N = ret('NASDAQ'), K = ret('KOSPI'), VK = ret('VKOSPI');
+    // 한국 지표의 다음 거래일 변화율을 미국 날짜에 붙임
+    const nextOf = (S) => { const m = new Map(); S.days.forEach((d, i) => { if (S.out.has(S.days[i + 1])) m.set(d, S.out.get(S.days[i + 1])); }); return m; };
+    const next = nextOf(K), vkNext = nextOf(VK);
+    const pearson = (a, b) => {
+      const xs = [], ys = [];
+      for (const [d, x] of a) if (b.has(d)) { xs.push(x); ys.push(b.get(d)); }
+      const n = xs.length, mx = xs.reduce((s, v) => s + v, 0) / n, my = ys.reduce((s, v) => s + v, 0) / n;
+      let sxy = 0, sxx = 0, syy = 0;
+      for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2; }
+      return { corr: n > 2 ? sxy / Math.sqrt(sxx * syy) : null, n };
+    };
+    return [
+      { pair: 'VIX ↔ 나스닥', basis: '같은 날', ...pearson(V.out, N.out) },
+      { pair: 'VXN ↔ 나스닥', basis: '같은 날', ...pearson(X.out, N.out) },
+      { pair: 'VKOSPI ↔ 코스피', basis: '같은 날', ...pearson(VK.out, K.out) },
+      { pair: 'VIX ↔ VKOSPI', basis: '같은 날', ...pearson(V.out, VK.out) },
+      { pair: 'VIX ↔ 다음 날 VKOSPI', basis: 'VKOSPI 1일 지연', ...pearson(V.out, vkNext) },
+      { pair: 'VIX ↔ 다음 날 코스피', basis: '코스피 1일 지연', ...pearson(V.out, next) },
+      { pair: '나스닥 ↔ 다음 날 코스피', basis: '코스피 1일 지연', ...pearson(N.out, next) },
+    ];
+  },
+});
+</script>
+
+<script>
+const fmtIdx = d3.format(',.2f');
+const fmtPct = d3.format('+.2%');
+const fmtRet = d3.format('+.1%');
+const fmtShare = d3.format('.0%');
+const fmtDate = d3.utcFormat('%Y-%m-%d');
+const zoneOf = (v) => v >= 30 ? ['공포', 'vx-bad'] : v >= 20 ? ['경계', 'vx-warn'] : ['안정', 'vx-ok'];
+const colorOf = (k) => dash.colors[vxKeys.indexOf(k)];
+const PAIRS = [
+  { id: 'us', idx: 'NASDAQ', fear: 'VIX' }, // fear는 VIX/VXN 버튼으로 바뀜
+  { id: 'kr', idx: 'KOSPI', fear: 'VKOSPI' },
+];
+
+function setFail(el) { el.textContent = ''; const f = document.createElement('div'); f.className = 'vx-fail'; f.textContent = 'Failed to load'; el.appendChild(f); }
+function setWait(el, txt) { el.textContent = ''; const w = document.createElement('div'); w.className = 'vx-wait'; w.textContent = txt; el.appendChild(w); }
+function mark(el, src, field, where) { el.dataset.source = src; el.dataset.field = field; el.dataset.where = where; }
+function unmark(el) { delete el.dataset.source; delete el.dataset.field; delete el.dataset.where; }
+// 역대 분포 위치: pct = 이 값 이하였던 날의 비율
+const posText = (pct) => pct >= 0.5 ? '역대 상위 ' + fmtShare(1 - pct) : '역대 하위 ' + fmtShare(pct);
+
+function drawTiles() {
+  const L = dash.data('latest'), F = dash.data('fear');
+  vxKeys.forEach((k) => {
+    document.getElementById('sw-' + k).style.background = colorOf(k);
+    const big = document.getElementById('big-' + k);
+    const loading = L.status === 'loading';
+    const r = L.status === 'ok' ? L.data.find((d) => d.index === k) : null;
+    big.classList.toggle('dash-skeleton', loading);
+    if (k === 'VKOSPI') {
+      if (r) { mark(big, 'latest', 'close', 'index=VKOSPI'); big.textContent = fmtIdx(r.close); }
+      else { unmark(big); big.textContent = '—'; }
+    } else {
+      big.textContent = r ? fmtIdx(r.close) : '—';
+    }
+    if (k === 'NASDAQ' || k === 'KOSPI') {
+      const chg = document.getElementById('chg-' + k);
+      chg.textContent = r ? '전일 대비 ' + fmtPct(r.chg) : '—';
+      chg.className = r ? (r.chg < 0 ? 'vx-bad' : 'vx-ok') : (loading ? 'dash-skeleton' : '');
+      document.getElementById('date-' + k).textContent = r ? r.date : '';
+    } else {
+      const pct = document.getElementById('pct-' + k);
+      const f = F.status === 'ok' ? F.data.find((d) => d.index === k) : null;
+      if (f && f.n) {
+        mark(pct, 'fear', 'pct', 'index=' + k);
+        pct.textContent = posText(f.pct) + (f.close >= f.q80 ? ' · 매수 후보 구간' : '');
+        pct.className = f.close >= f.q80 ? 'vx-warn' : 'vx-muted';
+      } else {
+        if (k === 'VKOSPI') unmark(pct);
+        pct.textContent = k === 'VKOSPI' && F.status !== 'loading' ? '데이터 대기 중' : '—';
+        pct.className = F.status === 'loading' ? 'dash-skeleton' : 'vx-muted';
+      }
+      if (k === 'VIX') {
+        const pill = document.getElementById('zone-VIX');
+        if (r) { const [z, cls] = zoneOf(r.close); pill.textContent = z + ' 구간'; pill.className = 'vx-pill ' + cls; }
+        else { pill.textContent = ''; pill.className = ''; }
+      }
+    }
+  });
+
+  const take = document.getElementById('vx-take');
+  take.textContent = '';
+  const f = F.status === 'ok' ? F.data.find((d) => d.index === 'VIX') : null;
+  if (!f || !f.n) { const s = document.createElement('span'); s.textContent = '—'; mark(s, 'fear', 'pct', 'index=VIX'); if (F.status === 'loading') s.className = 'dash-skeleton'; take.appendChild(s); return; }
+  const b = (txt, src, field, where) => { const el = document.createElement('b'); el.textContent = txt; mark(el, src, field, where); return el; };
+  take.append('장기 투자자가 공포지수가 높을 때 사면 상대적 저점에 사는 걸까요? 지금 VIX는 ',
+    b(fmtIdx(f.close), 'fear', 'close', 'index=VIX'), ` (${f.date})로 ${f.start.slice(0, 4)}년 이후 분포에서 `,
+    b(posText(f.pct), 'fear', 'pct', 'index=VIX'), ' 위치입니다. 아래 표에서 구간별로 그날 샀을 때의 이후 수익률을 비교해 보세요.');
+}
+
+let parsedFor = null, parsed = [];
+function series(rows) {
+  if (parsedFor !== rows) {
+    parsed = rows.map((r) => ({ date: new Date(r.Date + 'T00:00:00Z'), VIX: vxNum(r.VIX), VXN: vxNum(r.VXN), NASDAQ: vxNum(r.NASDAQ), KOSPI: vxNum(r.KOSPI), VKOSPI: vxNum(r.VKOSPI) }));
+    parsedFor = rows;
+  }
+  if (!vxPeriod) return parsed;
+  const start = d3.utcDay.offset(parsed[parsed.length - 1].date, -Math.round(vxPeriod * 365.25));
+  return parsed.filter((d) => d.date >= start);
+}
+
+function textWidth(svg, strs) {
+  const t = svg.append('text').attr('font-size', 12).style('font-family', 'var(--font-anthropic-sans)');
+  let w = 0; strs.forEach((s) => { t.text(s); w = Math.max(w, t.node().getComputedTextLength()); });
+  t.remove(); return w;
+}
+
+function makeTip(box) { const tip = document.createElement('div'); tip.className = 'vx-tip'; tip.hidden = true; box.appendChild(tip); return tip; }
+function tipRow(tip, color, name, val) {
+  const r = document.createElement('div'); r.className = 'vx-tip-r';
+  const sw = document.createElement('span'); sw.className = 'vx-sw'; sw.style.background = color;
+  const n = document.createElement('span'); n.textContent = name;
+  const b = document.createElement('b'); b.textContent = val;
+  r.append(sw, n, b); tip.appendChild(r);
+}
+function placeTip(box, tip, px, py) {
+  const W = box.clientWidth, tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = px + 14; if (x + tw > W) x = px - 14 - tw; if (x < 0) x = 0;
+  const y = Math.max(0, Math.min(py - th / 2, box.clientHeight - th));
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function styleAxis(xa) {
+  xa.attr('font-size', null).attr('font-family', null);
+  xa.selectAll('text').attr('font-size', 12).attr('fill', 'var(--color-fg-muted)').style('font-family', 'var(--font-anthropic-sans)');
+  xa.selectAll('line,path').attr('stroke', 'var(--cds-chart-axis)');
+}
+function yLabels(g, y, ticks, xr, fmt) {
+  g.append('g').selectAll('line').data(ticks).join('line').attr('x1', xr[0]).attr('x2', xr[1]).attr('y1', y).attr('y2', y).attr('stroke', 'var(--cds-chart-grid)');
+  g.append('g').selectAll('text').data(ticks).join('text').attr('x', xr[0] - 6).attr('y', y).attr('dy', '0.32em').attr('text-anchor', 'end')
+    .attr('font-size', 12).attr('fill', 'var(--color-fg-muted)').style('font-family', 'var(--font-anthropic-sans)').text(fmt);
+}
+// 로그 축 눈금: 많으면 고르게 5개 안팎만
+function logTicks(y) { const t = y.ticks(); const step = Math.ceil(t.length / 5); return t.filter((_, i) => i % step === 0); }
+
+function drawPair(p) {
+  const box = document.getElementById('chart-' + p.id);
+  const P = dash.data('prices'), F = dash.data('fear');
+  box.textContent = '';
+  if ([P.status, F.status].some((s) => s === 'error' || s === 'connect')) { setFail(box); return; }
+  if (P.status !== 'ok' || F.status !== 'ok') { box.classList.add('dash-skeleton'); return; }
+  box.classList.remove('dash-skeleton');
+  const data = series(P.data);
+  const e = F.data.find((d) => d.index === p.fear);
+  const hasFear = !!(e && e.n > 0);
+  const ip = data.filter((d) => d[p.idx] != null);
+  if (!ip.length) { setWait(box, vxNames[p.idx] + ' 데이터가 이 기간에 없습니다.'); return; }
+  const fp = hasFear ? data.filter((d) => d[p.fear] != null) : [];
+
+  const W = box.clientWidth, narrow = W < 520;
+  const titleH = 20, h1 = narrow ? 150 : 180, gap = 18, h2 = narrow ? 90 : 110, axisH = 24;
+  const top1 = titleH, top2 = top1 + h1 + gap + titleH, H = top2 + h2 + axisH;
+  const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+
+  const yi = d3.scaleLog(d3.extent(ip, (d) => d[p.idx]), [top1 + h1, top1]).nice();
+  const ti = logTicks(yi);
+  const yf = d3.scaleLinear([0, fp.length ? d3.max(fp, (d) => d[p.fear]) : 1], [top2 + h2, top2]).nice(4);
+  const tf = yf.ticks(4);
+  const ml = Math.ceil(textWidth(svg, ti.map(d3.format(',')).concat(tf.map(String)))) + 10, mr = 8;
+  const x = d3.scaleUtc(d3.extent(data, (d) => d.date), [ml, W - mr]);
+  const xr = [ml, W - mr];
+
+  // 매수 후보일(공포 상위 20%) 음영: 연속 구간을 하나의 띠로
+  if (fp.length) {
+    const runs = []; let cur = null;
+    fp.forEach((d, i) => {
+      const on = d[p.fear] >= e.q80;
+      if (on && !cur) cur = { a: d.date, b: d.date };
+      else if (on) cur.b = d.date;
+      if ((!on || i === fp.length - 1) && cur) { runs.push(cur); cur = null; }
+    });
+    const band = svg.append('g').attr('fill', colorOf(p.fear)).attr('opacity', 0.14);
+    runs.forEach((r) => {
+      const a = x(r.a), w = Math.max(1.5, x(d3.utcDay.offset(r.b, 1)) - a);
+      band.append('rect').attr('x', a).attr('y', top1).attr('width', w).attr('height', h1);
+      band.append('rect').attr('x', a).attr('y', top2).attr('width', w).attr('height', h2);
+    });
+  }
+
+  yLabels(svg, yi, ti, xr, d3.format(','));
+  svg.append('path').datum(ip).attr('fill', 'none').attr('stroke', colorOf(p.idx)).attr('stroke-width', narrow ? 1.25 : 1.5)
+    .attr('stroke-linejoin', 'round').attr('d', d3.line().x((d) => x(d.date)).y((d) => yi(d[p.idx])));
+  const t1 = svg.append('text').attr('x', ml).attr('y', top1 - 6).attr('font-size', 13).style('font-family', 'var(--font-anthropic-sans)');
+  t1.append('tspan').attr('fill', colorOf(p.idx)).attr('font-weight', 600).text(vxNames[p.idx] + '  ');
+  t1.append('tspan').attr('fill', 'var(--color-fg-muted)').text(fmtIdx(ip[ip.length - 1][p.idx]) + '  (로그 축)');
+
+  const t2 = svg.append('text').attr('x', ml).attr('y', top2 - 6).attr('font-size', 13).style('font-family', 'var(--font-anthropic-sans)');
+  t2.append('tspan').attr('fill', colorOf(p.fear)).attr('font-weight', 600).text(vxNames[p.fear] + '  ');
+  if (fp.length) {
+    yLabels(svg, yf, tf, xr, String);
+    svg.append('path').datum(fp).attr('fill', 'none').attr('stroke', colorOf(p.fear)).attr('stroke-width', 1.25)
+      .attr('stroke-linejoin', 'round').attr('d', d3.line().x((d) => x(d.date)).y((d) => yf(d[p.fear])));
+    svg.append('line').attr('x1', ml).attr('x2', W - mr).attr('y1', yf(e.q80)).attr('y2', yf(e.q80))
+      .attr('stroke', 'var(--cds-chart-status-critical)').attr('stroke-dasharray', '4 3');
+    svg.append('text').attr('x', W - mr).attr('y', yf(e.q80) - 4).attr('text-anchor', 'end').attr('font-size', 11)
+      .attr('fill', 'var(--color-fg-muted)').style('font-family', 'var(--font-anthropic-sans)').text('상위 20% 기준 ' + e.q80.toFixed(1));
+    t2.append('tspan').attr('fill', 'var(--color-fg-muted)').text(fmtIdx(fp[fp.length - 1][p.fear]));
+  } else {
+    svg.append('rect').attr('x', ml).attr('y', top2).attr('width', W - ml - mr).attr('height', h2).attr('fill', 'none')
+      .attr('stroke', 'var(--color-border-line)').attr('stroke-dasharray', '4 3').attr('rx', 6);
+    svg.append('text').attr('x', (ml + W - mr) / 2).attr('y', top2 + h2 / 2).attr('dy', '0.32em').attr('text-anchor', 'middle').attr('font-size', 12)
+      .attr('fill', 'var(--color-fg-muted)').style('font-family', 'var(--font-anthropic-sans)').text(vxNames[p.fear] + ' 데이터 대기 중');
+  }
+
+  styleAxis(svg.append('g').attr('transform', `translate(0,${H - axisH + 4})`)
+    .call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - ml) / 90))).tickSizeOuter(0)));
+
+  const rule = svg.append('line').attr('y1', top1).attr('y2', top2 + h2).attr('stroke', 'var(--cds-chart-axis)').attr('visibility', 'hidden');
+  const dotI = svg.append('circle').attr('r', 3.5).attr('fill', colorOf(p.idx)).attr('stroke', 'var(--color-panel)').attr('stroke-width', 1.5).attr('visibility', 'hidden');
+  const dotF = svg.append('circle').attr('r', 3.5).attr('fill', colorOf(p.fear)).attr('stroke', 'var(--color-panel)').attr('stroke-width', 1.5).attr('visibility', 'hidden');
+  const tip = makeTip(box);
+  const bis = d3.bisector((d) => d.date).center;
+  const move = (ev) => {
+    const [mx] = d3.pointer(ev, svg.node());
+    const scale = W / svg.node().getBoundingClientRect().width;
+    const d = data[bis(data, x.invert(mx))];
+    if (!d) return;
+    const px = x(d.date);
+    rule.attr('x1', px).attr('x2', px).attr('visibility', 'visible');
+    tip.textContent = '';
+    const dd = document.createElement('div'); dd.className = 'vx-tip-d'; dd.textContent = fmtDate(d.date); tip.appendChild(dd);
+    const vi = d[p.idx], vf = hasFear ? d[p.fear] : null;
+    dotI.attr('visibility', vi == null ? 'hidden' : 'visible').attr('cx', px).attr('cy', vi == null ? 0 : yi(vi));
+    dotF.attr('visibility', vf == null ? 'hidden' : 'visible').attr('cx', px).attr('cy', vf == null ? 0 : yf(vf));
+    tipRow(tip, colorOf(p.idx), vxNames[p.idx], vi == null ? '휴장' : fmtIdx(vi));
+    tipRow(tip, colorOf(p.fear), vxNames[p.fear], !hasFear ? '대기' : vf == null ? '휴장' : fmtIdx(vf) + (vf >= e.q80 ? ' · 상위 20%' : ''));
+    tip.hidden = false;
+    placeTip(box, tip, px / scale, d3.pointer(ev, box)[1]);
+  };
+  const leave = () => { rule.attr('visibility', 'hidden'); dotI.attr('visibility', 'hidden'); dotF.attr('visibility', 'hidden'); tip.hidden = true; };
+  svg.append('rect').attr('x', ml).attr('y', top1).attr('width', W - ml - mr).attr('height', top2 + h2 - top1).attr('fill', 'transparent')
+    .on('pointermove pointerdown', move).on('pointerleave', leave);
+}
+
+function drawFwd(p) {
+  const body = document.querySelector('#fwd-' + p.id + ' tbody');
+  const span = document.getElementById('span-' + p.id);
+  const R = dash.data('fwd'), F = dash.data('fear');
+  body.textContent = ''; span.textContent = '';
+  if (R.status !== 'ok') {
+    const tr = body.insertRow(), td = tr.insertCell(); td.colSpan = 8;
+    if (R.status === 'error' || R.status === 'connect') setFail(td); else { td.className = 'dash-skeleton'; td.textContent = '—'; }
+    return;
+  }
+  const rows = R.data.filter((r) => r.key.startsWith(p.fear + '-'));
+  const base = rows.find((r) => r.key === p.fear + '-all');
+  rows.forEach((r) => {
+    const tr = body.insertRow(); tr.dataset.key = r.key;
+    if (r.key.endsWith('-Q5')) tr.className = 'vx-hi';
+    if (r === base) tr.className = 'vx-base';
+    tr.insertCell().textContent = r.bucket;
+    const cell = (txt, cls) => { const c = tr.insertCell(); c.className = 'vx-num' + (cls ? ' ' + cls : ''); c.textContent = txt; return c; };
+    if (r.range == null) { for (let i = 0; i < 7; i++) cell('—', 'vx-muted'); return; }
+    cell(r.range, 'vx-muted');
+    ['r1m', 'r3m', 'r6m', 'r1y'].forEach((k) => {
+      const v = r[k];
+      // 기준(전체 기간)보다 높으면 초록, 낮으면 빨강
+      const cls = v == null || r === base || !base || base[k] == null ? '' : v > base[k] ? 'vx-ok' : 'vx-bad';
+      cell(v == null ? '—' : fmtRet(v), cls);
+    });
+    cell(r.up1y == null ? '—' : fmtShare(r.up1y));
+    cell(r.n == null ? '—' : d3.format(',')(r.n), 'vx-muted');
+  });
+  const e = F.status === 'ok' ? F.data.find((d) => d.index === p.fear) : null;
+  if (e && e.n) span.textContent = `계산 기간: ${e.start} ~ ${e.end} (차트 기간과 무관). 초록/빨강은 마지막 줄 '전체 기간' 평균보다 높은지/낮은지입니다.`;
+}
+
+function drawVV() {
+  const box = document.getElementById('vv');
+  const P = dash.data('prices');
+  box.textContent = '';
+  if (P.status === 'error' || P.status === 'connect') { setFail(box); return; }
+  if (P.status !== 'ok') { box.classList.add('dash-skeleton'); return; }
+  box.classList.remove('dash-skeleton');
+  const data = series(P.data).filter((d) => d.date >= new Date('2009-04-13T00:00:00Z'));
+  const keys = ['VIX', 'VKOSPI'];
+  const pts = {}; keys.forEach((k) => { pts[k] = data.filter((d) => d[k] != null); });
+  if (!pts.VKOSPI.length) { setWait(box, 'VKOSPI 데이터 대기 중 — KRX Open API 인증키를 등록하면 VIX와 같은 축에 겹쳐 그려집니다.'); return; }
+  const W = box.clientWidth, H = 260, mt = 10, mb = 24;
+  const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+  const y = d3.scaleLinear([0, d3.max(keys.flatMap((k) => pts[k].map((d) => d[k])))], [H - mb, mt]).nice(5);
+  const ml = Math.ceil(textWidth(svg, y.ticks(5).map(String))) + 10;
+  const endLabs = keys.map((k) => k + ' ' + d3.format('.1f')(pts[k][pts[k].length - 1][k]));
+  const mr = Math.ceil(textWidth(svg, endLabs)) + 12;
+  const x = d3.scaleUtc(d3.extent(data, (d) => d.date), [ml, W - mr]);
+  const j0 = new Date('2026-06-01T00:00:00Z'), j1 = new Date('2026-07-01T00:00:00Z');
+  const [x0, x1] = x.domain();
+  if (j1 > x0 && j0 < x1) {
+    const a = x(j0 < x0 ? x0 : j0), b = x(j1 > x1 ? x1 : j1);
+    svg.append('rect').attr('x', a).attr('y', mt).attr('width', Math.max(1, b - a)).attr('height', H - mt - mb).attr('fill', 'var(--cds-chart-grid)').attr('opacity', 0.8);
+    svg.append('text').attr('x', (a + b) / 2).attr('y', mt + 12).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').style('font-family', 'var(--font-anthropic-sans)').text('2026.6');
+  }
+  yLabels(svg, y, y.ticks(5), [ml, W - mr], String);
+  keys.forEach((k) => {
+    svg.append('path').datum(pts[k]).attr('fill', 'none').attr('stroke', colorOf(k)).attr('stroke-width', 1.75).attr('stroke-linejoin', 'round')
+      .attr('d', d3.line().x((d) => x(d.date)).y((d) => y(d[k])));
+  });
+  const ly = keys.map((k) => y(pts[k][pts[k].length - 1][k]));
+  if (Math.abs(ly[0] - ly[1]) < 15) { const mid = (ly[0] + ly[1]) / 2, up = ly[0] <= ly[1] ? 0 : 1; ly[up] = mid - 8; ly[1 - up] = mid + 8; }
+  keys.forEach((k, i) => {
+    svg.append('text').attr('x', W - mr + 6).attr('y', ly[i]).attr('dy', '0.32em').attr('font-size', 12).attr('font-weight', 600)
+      .attr('fill', colorOf(k)).style('font-family', 'var(--font-anthropic-sans)').text(endLabs[i]);
+  });
+  styleAxis(svg.append('g').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - ml - mr) / 90))).tickSizeOuter(0)));
+  const rule = svg.append('line').attr('y1', mt).attr('y2', H - mb).attr('stroke', 'var(--cds-chart-axis)').attr('visibility', 'hidden');
+  const dots = keys.map((k) => svg.append('circle').attr('r', 3.5).attr('fill', colorOf(k)).attr('stroke', 'var(--color-panel)').attr('stroke-width', 1.5).attr('visibility', 'hidden'));
+  const tip = makeTip(box);
+  const bis = d3.bisector((d) => d.date).center;
+  const move = (ev) => {
+    const [mx] = d3.pointer(ev, svg.node());
+    const scale = W / svg.node().getBoundingClientRect().width;
+    const d = data[bis(data, x.invert(mx))];
+    if (!d) return;
+    const px = x(d.date);
+    rule.attr('x1', px).attr('x2', px).attr('visibility', 'visible');
+    tip.textContent = '';
+    const dd = document.createElement('div'); dd.className = 'vx-tip-d'; dd.textContent = fmtDate(d.date); tip.appendChild(dd);
+    keys.forEach((k, i) => {
+      const v = d[k];
+      dots[i].attr('visibility', v == null ? 'hidden' : 'visible').attr('cx', px).attr('cy', v == null ? 0 : y(v));
+      tipRow(tip, colorOf(k), k, v == null ? '휴장' : d3.format('.2f')(v));
+    });
+    tip.hidden = false;
+    placeTip(box, tip, px / scale, d3.pointer(ev, box)[1]);
+  };
+  const leave = () => { rule.attr('visibility', 'hidden'); dots.forEach((c) => c.attr('visibility', 'hidden')); tip.hidden = true; };
+  svg.append('rect').attr('x', ml).attr('y', mt).attr('width', W - ml - mr).attr('height', H - mt - mb).attr('fill', 'transparent')
+    .on('pointermove pointerdown', move).on('pointerleave', leave);
+}
+
+function drawCorr() {
+  const body = document.getElementById('corr-body');
+  const C = dash.data('corr');
+  body.textContent = '';
+  if (C.status !== 'ok') {
+    const tr = body.insertRow(), td = tr.insertCell(); td.colSpan = 4;
+    if (C.status === 'error' || C.status === 'connect') setFail(td); else { td.className = 'dash-skeleton'; td.textContent = '—'; }
+    return;
+  }
+  C.data.forEach((r) => {
+    const tr = body.insertRow();
+    tr.insertCell().textContent = r.pair;
+    const b = tr.insertCell(); b.textContent = r.basis; b.className = 'vx-muted';
+    const c = tr.insertCell(); c.className = 'vx-num';
+    if (r.corr == null) { c.textContent = '—'; c.classList.add('vx-muted'); const n0 = tr.insertCell(); n0.className = 'vx-num vx-muted'; n0.textContent = '데이터 대기'; return; }
+    const s = document.createElement('span'); s.textContent = d3.format('+.2f')(r.corr);
+    const bar = document.createElement('span'); bar.className = 'vx-cbar';
+    const fill = document.createElement('i');
+    const w = Math.abs(r.corr) * 50;
+    fill.style.width = w + '%'; fill.style.left = r.corr < 0 ? (50 - w) + '%' : '50%';
+    fill.style.background = r.corr < 0 ? 'var(--cds-chart-status-critical)' : dash.colors[1];
+    bar.appendChild(fill); c.append(s, bar);
+    const n = tr.insertCell(); n.className = 'vx-num'; n.textContent = d3.format(',')(r.n);
+  });
+}
+
+function drawCharts() { PAIRS.forEach(drawPair); drawVV(); }
+
+function setUsFear(f) {
+  PAIRS[0].fear = f;
+  document.querySelectorAll('#us-fear button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === f)));
+  document.getElementById('us-title').textContent = '나스닥 × ' + f;
+  document.getElementById('us-h3').textContent = '그날 샀다면: ' + f + ' 구간별 이후 평균 수익률';
+  document.getElementById('us-th').textContent = f + ' 구간';
+}
+document.querySelectorAll('#us-fear button').forEach((btn) => {
+  btn.addEventListener('click', () => { setUsFear(btn.dataset.f); drawPair(PAIRS[0]); drawFwd(PAIRS[0]); });
+});
+
+document.querySelectorAll('.vx-sticky .vx-seg button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    window.vxPeriod = +btn.dataset.y;
+    document.querySelectorAll('.vx-sticky .vx-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    drawCharts();
+  });
+});
+
+dash.onData(() => { drawTiles(); drawCharts(); PAIRS.forEach(drawFwd); drawCorr(); });
+</script>
