@@ -33,11 +33,13 @@ jobs:
           VKOSPI_FLAG=""
           if [ -n "$KRX_API_KEY" ]; then VKOSPI_FLAG="--vkospi"; fi
           python vix_nasdaq_kospi.py --period 5y $VKOSPI_FLAG --csv data/closes_5y.csv --out data/vix_nasdaq_kospi.html
+          # 대시보드용 장기 데이터 (VIX·나스닥 1990~, 코스피 1996-12~, VKOSPI 2009-04~)
+          python vix_nasdaq_kospi.py --start 1990-01-01 $VKOSPI_FLAG --csv data/closes_long.csv --out /tmp/long.html
       - name: Commit data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add -f market_fear/data/closes_5y.csv
+          git add -f market_fear/data/closes_5y.csv market_fear/data/closes_long.csv
           [ -f market_fear/data/vkospi.csv ] && git add -f market_fear/data/vkospi.csv
           git diff --cached --quiet || git commit -m "Update market data (VIX, NASDAQ, KOSPI, VKOSPI)"
           git push

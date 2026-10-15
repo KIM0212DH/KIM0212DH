@@ -27,6 +27,7 @@ NAME_KEYS = ("IDX_NM", "IDX_NM_KOR")
 CLOSE_KEYS = ("CLSPRC_IDX", "CLSPRC", "TDD_CLSPRC")
 # 공식 발표값으로 검증 (2026-06-29: 공식 발표 이후 최고치)
 KNOWN_CLOSES = {"2026-06-09": 91.23, "2026-06-29": 96.94}
+FIRST_DAY = "2009-04-13"  # VKOSPI 공식 발표 시작일: 이전 날짜는 요청하지 않음
 
 
 def is_vkospi(name):
@@ -66,6 +67,7 @@ def load_vkospi(start, end=None, api_key=None, cache=None, pause=0.05):
     if cache and Path(cache).exists():
         cached = pd.read_csv(cache, index_col=0, parse_dates=True)["VKOSPI"]
 
+    start = max(pd.Timestamp(start), pd.Timestamp(FIRST_DAY))
     end = pd.Timestamp(end) if end else pd.Timestamp.today().normalize() - pd.Timedelta(days=1)
     days = pd.bdate_range(start, end)
     if not cached.empty:
