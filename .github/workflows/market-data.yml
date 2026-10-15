@@ -1,0 +1,33 @@
+name: Fetch VIX / NASDAQ / KOSPI data
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "market_fear/vix_nasdaq_kospi.py"
+      - ".github/workflows/market-data.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r market_fear/requirements.txt
+      - name: Download closes and build chart
+        working-directory: market_fear
+        run: |
+          mkdir -p data
+          python vix_nasdaq_kospi.py --period 5y --csv data/closes_5y.csv --out data/vix_nasdaq_kospi.html
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add -f market_fear/data/closes_5y.csv
+          git diff --cached --quiet || git commit -m "Update market data (VIX, NASDAQ, KOSPI)"
+          git push
