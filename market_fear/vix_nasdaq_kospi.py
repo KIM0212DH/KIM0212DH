@@ -108,7 +108,7 @@ def main():
     p.add_argument("--start", help="시작일 YYYY-MM-DD (지정 시 --period 무시)")
     p.add_argument("--end", help="종료일 YYYY-MM-DD")
     p.add_argument("--out", default="vix_nasdaq_kospi.html")
-    p.add_argument("--csv", help="종가 데이터를 CSV로도 저장할 경로")
+    p.add_argument("--csv", help="종가 원본 데이터를 CSV로도 저장할 경로")
     args = p.parse_args()
 
     raw = load_closes(args.period, args.start, args.end)
@@ -119,7 +119,7 @@ def main():
         print(f"{k:28s} {v:+.3f}")
 
     if args.csv:
-        closes.to_csv(args.csv)
+        raw.to_csv(args.csv)  # 휴장일 미보정 원본 (빈 칸 = 해당 시장 휴장)
     build_figure(closes, corr_rows).write_html(args.out, include_plotlyjs="cdn")
     print(f"저장 완료: {args.out}")
 
