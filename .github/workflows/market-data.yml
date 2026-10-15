@@ -1,10 +1,14 @@
-name: Fetch VIX / NASDAQ / KOSPI data
+name: Fetch VIX / NASDAQ / KOSPI / VKOSPI data
 
 on:
   workflow_dispatch:
+  schedule:
+    # 평일 23:30 UTC = 다음날 08:30 KST: 미국장 마감 후, KRX Open API 전일 데이터 갱신(08:00 KST) 후
+    - cron: "30 23 * * 1-5"
   push:
     paths:
       - "market_fear/vix_nasdaq_kospi.py"
+      - "market_fear/krx_vkospi.py"
       - ".github/workflows/market-data.yml"
 
 permissions:
@@ -21,13 +25,19 @@ jobs:
       - run: pip install -r market_fear/requirements.txt
       - name: Download closes and build chart
         working-directory: market_fear
+        env:
+          KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
         run: |
           mkdir -p data
-          python vix_nasdaq_kospi.py --period 5y --csv data/closes_5y.csv --out data/vix_nasdaq_kospi.html
+          # 저장소 Secret KRX_API_KEY가 있을 때만 VKOSPI 포함
+          VKOSPI_FLAG=""
+          if [ -n "$KRX_API_KEY" ]; then VKOSPI_FLAG="--vkospi"; fi
+          python vix_nasdaq_kospi.py --period 5y $VKOSPI_FLAG --csv data/closes_5y.csv --out data/vix_nasdaq_kospi.html
       - name: Commit data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
           git add -f market_fear/data/closes_5y.csv
-          git diff --cached --quiet || git commit -m "Update market data (VIX, NASDAQ, KOSPI)"
+          [ -f market_fear/data/vkospi.csv ] && git add -f market_fear/data/vkospi.csv
+          git diff --cached --quiet || git commit -m "Update market data (VIX, NASDAQ, KOSPI, VKOSPI)"
           git push
