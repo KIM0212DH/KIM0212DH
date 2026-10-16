@@ -1,6 +1,6 @@
 # 인수인계 노트 — 공포지수와 매수 타이밍 (새 세션용)
 
-마지막 갱신: 2026-10-15. 새 세션에서 작업을 이어갈 때 **이 문서를 먼저 읽으세요.**
+마지막 갱신: 2026-10-16. 새 세션에서 작업을 이어갈 때 **이 문서를 먼저 읽으세요.**
 자격 증명(아이디·비밀번호·API 키)의 **값**은 어디에도 출력·로그·커밋·대시보드에 넣지 않습니다. 설정 여부만 확인합니다.
 
 ---
@@ -17,7 +17,7 @@
 | 항목 | 상태 |
 |---|---|
 | VIX·VXN·나스닥·코스피 | 완료. Yahoo Finance(yfinance)로 수집 |
-| VKOSPI | **대기**. KRX Open API 인증키 발급 대기 중. 코드는 준비됨, 실데이터로 실행한 적 없음 |
+| VKOSPI | **완료 (2026-10-16)**. KRX Open API, 2010-01-04~2026-10-15, 4,130일. 검증값 91.23·96.94 일치. `closes_*.csv`에 `VKOSPI` 열 병합됨 |
 | 대시보드 | https://claude.ai/artifact/NjvX1QhNC72LrCMye8HNzD (Dashboard 타입 Artifact) |
 | 브랜치 | `claude/vix-nasdaq-kospi-comparison-q1ujie` (PR 없음, 만들지 말 것: 사용자 요청 전까지) |
 
@@ -28,8 +28,8 @@
 | `vix_nasdaq_kospi.py` | 메인. yfinance로 ^VIX, ^VXN, ^IXIC, ^KS11 수집 → CSV + Plotly HTML. `--vkospi`로 VKOSPI 병합 |
 | `krx_vkospi.py` | VKOSPI 수집 (KRX Open API). 캐시 CSV, 공식값 검증 |
 | `data/closes_5y.csv` | 최근 5년 (열: Date, VIX, VXN, NASDAQ, KOSPI) |
-| `data/closes_long.csv` | **대시보드가 쓰는 데이터.** VIX·나스닥 1990-01-02~, VXN 2001-01-23~, 코스피 1996-12-11~ |
-| `data/vkospi.csv` | (아직 없음) VKOSPI 캐시. 생기면 커밋 |
+| `data/closes_long.csv` | **대시보드가 쓰는 데이터.** VIX·나스닥 1990-01-02~, VXN 2001-01-23~, 코스피 1996-12-11~, VKOSPI 2010-01-04~ |
+| `data/vkospi.csv` | VKOSPI 캐시 (열: Date, VKOSPI). 2010-01-04~. 다음 실행부터는 마지막 날짜 이후만 요청 |
 | `dashboard/index.html` | 대시보드 페이지 원본 백업 (Artifact `files/index.html`과 동일하게 유지) |
 | `KRX_SETUP.md` | 사용자용 키·도메인 등록 복사·붙여넣기 안내 |
 | `requirements.txt` | yfinance, pandas, plotly, requests |
@@ -39,10 +39,10 @@
 
 | 위치 | 이름 | 용도 | 상태 |
 |---|---|---|---|
-| 클라우드 환경 변수 | `KRX_API_KEY` | KRX Open API 인증키 | 사용자가 발급 신청함 (2026-10-15) |
+| 클라우드 환경 변수 | `KRX_API_KEY` | KRX Open API 인증키 | **설정됨, 동작 확인** (키 발급 2026-10-16, 유효기간 ~2027-10-15) |
 | 클라우드 환경 변수 | `KRX_ID`, `KRX_PW` | KRX 웹 로그인 (pykrx) | **사용 안 함** (§5-1). 삭제 권장 안내함 |
 | 네트워크 허용 도메인 | Yahoo Finance 관련 | yfinance | 허용됨 |
-| 네트워크 허용 도메인 | `data-dbg.krx.co.kr` | **KRX Open API 실제 호출 주소** | **미허용 (2026-10-15에 프록시 403)**. 사용자에게 추가 요청함 |
+| 네트워크 허용 도메인 | `data-dbg.krx.co.kr` | **KRX Open API 실제 호출 주소** | 허용됨 (2026-10-16 확인) |
 | 네트워크 허용 도메인 | `openapi.krx.co.kr` | KRX Open API 포털 | 접속됨 |
 | 네트워크 허용 도메인 | `data.krx.co.kr` | KRX 정보데이터시스템 (웹) | 허용돼 있으나 **이 IP는 차단됨** (§5-1) |
 | GitHub Actions Secret | `KRX_API_KEY` | Actions에서 VKOSPI 수집 | 사용자 등록 필요 |
@@ -56,15 +56,19 @@
 - **장중에 받으면 마지막 행이 종가가 아님.** 2026-10-15 행의 VIX·나스닥은 미국장 개장 직후 장중 값이고, VXN은 빈칸이었음. 코스피는 확정 종가.
 - 휴장일은 CSV에서 빈칸(보정하지 않음). 한·미 휴장일이 다르므로 수익률은 각 지수의 실제 거래일 기준으로 계산.
 
-### KRX Open API (VKOSPI)
-- 엔드포인트: `GET https://data-dbg.krx.co.kr/svc/apis/idx/drvprod_dd_trd?basDd=YYYYMMDD` ('파생상품지수 시세정보').
-  - **출처 주의**: 공식 문서로 직접 확인하지 못했고, 커뮤니티 구현 https://github.com/RealYoungk/openkrx-mcp (`src/openkrx_mcp/client.py`)에서 확인. 키 승인 후 실제 응답으로 꼭 검증할 것.
-- 인증: `AUTH_KEY`. 우리 코드는 **헤더**로 보냄. 커뮤니티 구현은 쿼리 파라미터로 보냄. 401/403이면 쿼리 방식도 시도해 볼 것(단, URL에 키가 남으니 오류 메시지·로그에 URL을 출력하지 말 것).
-- 응답 필드 가정: `OutBlock_1` 배열, 지수명 `IDX_NM`, 종가 `CLSPRC_IDX`. **실제 응답으로 확인되지 않음.** 코드는 이름에 "변동성"과 "200"이 들어간 행을 찾고, 필드를 못 찾으면 받은 필드 목록을 담아 중단하도록 작성됨.
-- 기준일 하루당 요청 1번. 전 거래일까지만 제공(실시간 아님). 08:00 KST 무렵 갱신(커뮤니티 문서 기준). 일일 호출 한도가 있는 것으로 알려짐(커뮤니티 문서상 10,000).
-- 서비스별 이용 신청이 따로 필요(지수 → 파생상품지수 시세정보).
-- VKOSPI 공식 발표 시작: 2009-04-13. 코드에서 이전 날짜는 요청하지 않음(`FIRST_DAY`).
-- **검증 기준값 (반드시 확인)**: 2026-06-09 종가 **91.23**, 2026-06-29 종가 **96.94** (공식 발표 이후 최고). 불일치하면 저장하지 말고 중단.
+### KRX Open API (VKOSPI) — 2026-10-16 실제 응답으로 확인
+- 엔드포인트: `GET https://data-dbg.krx.co.kr/svc/apis/idx/drvprod_dd_trd?basDd=YYYYMMDD` (포털 서비스명: 지수 → **파생상품지수 시세정보**). 처음 주소를 찾은 출처는 커뮤니티 구현 https://github.com/RealYoungk/openkrx-mcp 였고, 실제 호출로 동작 확인.
+- 인증: `AUTH_KEY` **헤더**로 동작 확인(코드가 쓰는 방식). 쿼리 파라미터는 승인 후 시험하지 않음.
+- **승인 2단계**: (1) 인증키 발급, (2) **서비스별 이용 신청 → 관리자 승인**. (2) 전에는 모든 API가 `401 {"respMsg":"Unauthorized API Call"}`. 키가 맞아도 401이면 이용 신청 상태부터 확인.
+- 응답: `{"OutBlock_1": [...]}`, 행 필드 `BAS_DD, IDX_CLSS, IDX_NM, CLSPRC_IDX, CMPPREVDD_IDX, FLUC_RT, OPNPRC_IDX, HGPRC_IDX, LWPRC_IDX` (값은 문자열). 하루 약 300여 개 지수.
+- VKOSPI 행: `IDX_CLSS`="옵션지수", `IDX_NM`="코스피 200 변동성지수", 종가 `CLSPRC_IDX`.
+  - **주의**: "코스피 200 현선물 목표변동성 24% 지수", "코스피 200 변동성매칭 양매도지수" 등 이름이 비슷한 지수가 같이 옴. 코드는 공백 제거 후 `코스피200변동성지수`와 **정확히 일치**하는 행만 씀(처음 코드는 "변동성"+"200" 포함 검사라 잘못된 행을 고를 위험이 있어 수정).
+- **API 데이터 시작일: 2010-01-04.** VKOSPI 공식 발표는 2009-04-13부터지만 2009년 날짜는 빈 `OutBlock_1`. 2009-04-13~2009-12-30 VKOSPI는 이 API로는 없음(필요하면 KRX 정보데이터시스템 화면 다운로드 등 공식 경로).
+- 기준일 하루당 요청 1번. 전 거래일까지만 제공. 전체 수집(2010~, 약 4,400 요청)은 초당 약 2.6건, 약 28분.
+- 2026-10-16 첫 전체 수집이 4,200일째에 **200 응답인데 본문이 JSON이 아닌** 일시 오류로 중단됐고, 캐시가 끝에만 저장돼 모두 잃었음 → 재시도(최대 4회, 2/4/8/16초)와 100일마다 중간 저장을 추가. 두 번째 실행은 재시도 없이 완료.
+- **검증 결과**: 2026-06-09 **91.23**, 2026-06-29 **96.94** 모두 일치. 4,130일, 결측 없음. 최솟값 9.72, 중앙값 17.11, 평균 19.92. 상위 5개가 모두 2026-06 하순(96.94, 95.09, 94.81, 93.80, 92.71).
+- 코스피(Yahoo) 거래일과 대조: VKOSPI만 있고 Yahoo 코스피가 빈 날 5일(2011-10-04, 2017-09-22, 2017-12-20, 2022-01-03, 2022-05-09, Yahoo 쪽 누락으로 보임), 반대는 수집 당일 1일뿐.
+- 사용한 날의 호출 수: 실패한 첫 실행 + 재실행 + 탐색으로 약 8,600회(커뮤니티 문서상 일일 한도 10,000). 하루에 전체 수집을 세 번 하지 말 것.
 
 ## 5. 이번 작업에서 놓쳤던 점·수정한 점 (교훈)
 
@@ -135,18 +139,11 @@ Dashboard 타입 Artifact이며, 내용은 Artifact의 자체 저장소 문서�
 
 ## 8. 남은 작업
 
-1. 사용자가 `KRX_API_KEY` 등록 + `data-dbg.krx.co.kr` 허용 → **새 세션**에서:
-   ```
-   cd market_fear
-   pip install -r requirements.txt
-   python krx_vkospi.py --start 2009-04-13 --csv data/vkospi.csv     # 검증 91.23 / 96.94
-   python vix_nasdaq_kospi.py --start 1990-01-01 --vkospi --csv data/closes_long.csv --out /tmp/long.html
-   python vix_nasdaq_kospi.py --period 5y --vkospi --csv data/closes_5y.csv --out /tmp/5y.html
-   ```
-   - 첫 실행 시 응답 필드명이 가정과 다르면 `krx_vkospi.py`의 `NAME_KEYS`/`CLOSE_KEYS`를 실제 값으로 수정.
-   - 성공하면 `git add -f data/vkospi.csv data/closes_*.csv` → 커밋 → fetch/merge → push.
-2. 대시보드: 새 `closes_long.csv`를 asset 업로드하고 `datasets/prices`를 update(§6). 설명(description)에서 "VKOSPI 대기" 문구를 바꾸고 출처(KRX Open API)를 추가.
-3. 사용자 보고: VKOSPI 구간별 수익률, 현재 VKOSPI의 분위(10/15 코스피 −7.6% 급락일), VIX vs VKOSPI 2026년 6월 비교.
+1. ~~VKOSPI 수집~~ **완료 (2026-10-16)**. `data/vkospi.csv`, `closes_long.csv`, `closes_5y.csv`에 VKOSPI 반영·커밋됨. 매일 갱신은 `python krx_vkospi.py --start 2010-01-04 --csv data/vkospi.csv`(캐시 이후 날짜만 요청) 후 `vix_nasdaq_kospi.py --vkospi`.
+   - GitHub Actions에서 VKOSPI를 받으려면 저장소 Secret `KRX_API_KEY` 등록 필요(2026-10-16 Actions 커밋은 VKOSPI 없이 Yahoo 데이터만 갱신됨 → 아직 미등록으로 보임).
+   - 주의: Yahoo 코스피 마지막 행이 한국 장중이면 종가가 아님(2026-10-16 행은 장중 값).
+2. 대시보드: 새 `closes_long.csv`를 asset 업로드하고 `datasets/prices`를 update(§6). 설명(description)에서 "VKOSPI 대기" 문구를 바꾸고 출처(KRX Open API, 2010-01-04~)를 추가.
+3. 사용자 보고: VKOSPI 구간별 수익률, 현재 VKOSPI의 분위(2026-10-15 코스피 −7.6% 급락일 VKOSPI 55.38, 전날 44.91), VIX vs VKOSPI 2026년 6월 비교.
 4. (선택) 실시간: 증권사 API(예: 한국투자증권 KIS Developers) 검토. KRX Open API는 일별·전일 기준이라 실시간이 아님.
 5. (선택) 워크플로 예약 실행을 쓰려면 기본 브랜치 병합 필요. 사용자 결정 사항.
 
