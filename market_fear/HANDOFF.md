@@ -100,8 +100,8 @@ Dashboard 타입 Artifact이며, 내용은 Artifact의 자체 저장소 문서�
 | 문서 | 내용 | 마지막 버전 |
 |---|---|---|
 | `dash/meta` | `{title: "공포지수와 매수 타이밍"}` | 2 |
-| `datasets/prices` | file source, `closes_long.csv` blob `/_blob/64b36ca79cd9a57415c1a3d3de7a27ad` | 4 |
-| `files/index.html` | 페이지 (`market_fear/dashboard/index.html`과 동일) | 4 |
+| `datasets/prices` | file source, `closes_long.csv` blob `/_blob/c1c3b8e5aaa077d451ff954630588ad0` (VKOSPI 포함) | 5 |
+| `files/index.html` | 페이지 (`market_fear/dashboard/index.html`과 동일) | 5 |
 
 - **새 CSV 반영 절차**: `Artifact publish`(url, file_path, `asset: true`)로 업로드 → 결과의 `/_blob/<id>`로 `datasets/prices`의 `source.url`·`name`·`updated{at,by}`·`description`을 update.
 - **페이지 수정 절차**: `dashboard/index.html` 수정 → `{"text": <전체 HTML>}` JSON 파일 생성 → `files/index.html` update(file_path, if_version) → 저장소에도 커밋.
@@ -136,6 +136,23 @@ Dashboard 타입 Artifact이며, 내용은 Artifact의 자체 저장소 문서�
 - 해석 요지: (1) 평균은 가설 지지, (2) 상승 비율은 오히려 낮아 위험 대가형 보상, (3) 4분위(애매한 공포)가 최악, (4) VXN 상위 구간에는 2001~02 닷컴 붕괴가 많이 포함돼 신호가 약함, (5) 독립 사례가 적어(겹치는 보유 기간, 사건 군집) 통계적 확신은 제한적.
 - 관련 문헌(기억 기반, 원문 확인 권장): Giot (2005, *Journal of Portfolio Management*), Banerjee·Doran·Peterson (2007, *Journal of Banking & Finance*), Bollerslev·Tauchen·Zhou (2009, *Review of Financial Studies*).
 - 이전 분석: 2026년 코스피 연율 변동성 61%, 고점 9,115(2026-06-22) 대비 −39%. 같은 기간 VIX 평균 약 18로 안정 → 한국 고유 리스크. 2026-10-15 코스피 −7.6%(5,554.22).
+
+### VKOSPI 결과 (2026-10-16, 코스피 × VKOSPI, 2010-01-04~)
+
+| 구간 | 범위 | 3개월 | 1년 평균 | 1년 중앙값 | 1년 뒤 상승 |
+|---|---|---|---|---|---|
+| 하위 20% | 9.7–13.5 | −0.3% | +1.8% | −0.2% | 49% |
+| 2분위 | 13.5–15.8 | −0.9% | +0.7% | +0.5% | 53% |
+| 3분위 | 15.8–18.3 | +0.1% | +3.4% | +1.3% | 55% |
+| 4분위 | 18.3–22.1 | +3.6% | +24.1% | +6.6% | 70% |
+| 상위 20% | 22.1–96.9 | +11.7% | +34.6% | +13.7% | 81% |
+| 전체 | | +2.7% | +11.5% | | 60% |
+
+- 2025년 이후 제외(2025 급등장 편향 점검): 상위 20% 1년 +20.6%(상승 79%) vs 전체 +5.4%.
+- 2026년은 VKOSPI 평균 59.8로 거의 전부 상위 20% 구간(191일), 1년 수익률 미확정.
+- 같은 날 상관(일간 변화율): VKOSPI↔코스피 −0.493, VIX↔VKOSPI 0.165, VIX(t)↔VKOSPI(t+1) 0.406. 수준 상관 0.426.
+- 2026-06 VIX 평균 18.1(최대 22.2) vs VKOSPI 평균 85.5. 2026-10-15 VKOSPI 55.38 = 2010년 이후 상위 2.6%.
+- 비교: 같은 2010~ 기간 VIX 상위 20%의 나스닥 1년 +23.2%(상승 90%) vs 전체 +17.3%(87%).
 
 ## 8. 남은 작업
 

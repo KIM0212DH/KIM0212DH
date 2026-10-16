@@ -126,7 +126,7 @@
         <div class="vx-sub"><span class="vx-muted" id="pct-VKOSPI">데이터 대기 중</span></div>
       </div>
     </div>
-    <p class="vx-note">위: 코스피(로그 축). 아래: VKOSPI와 '상위 20%' 기준선. VKOSPI는 KRX Open API 인증키를 등록하면 채워집니다.</p>
+    <p class="vx-note">위: 코스피(로그 축). 아래: VKOSPI와 '상위 20%' 기준선. VKOSPI는 KRX Open API가 제공하는 2010년 1월부터입니다.</p>
     <div class="vx-chart" id="chart-kr" data-source="prices fear"></div>
     <h3 class="vx-h3">그날 샀다면: VKOSPI 구간별 이후 평균 수익률</h3>
     <div class="vx-tablebox">
@@ -188,7 +188,7 @@
       <div><dt>VKOSPI (코스피200 변동성지수)</dt><dd>한국거래소(KRX)가 2009년 4월 13일부터 공식 발표하는 지수로, 코스피200 옵션 가격으로 계산한 앞으로 30일간의 기대변동성(연율 %)입니다. VIX와 같은 계열이라 '한국판 VIX'로 불립니다.</dd></div>
       <div><dt>기준선 20 / 30 (VIX)</dt><dd>시장에서 흔히 쓰는 관행적 구간입니다. 20 미만은 안정, 20~30은 경계, 30 이상은 공포로 읽습니다. 통계적으로 정해진 임계값은 아닙니다.</dd></div>
       <div><dt>NASDAQ Composite (^IXIC) · KOSPI (^KS11)</dt><dd>각각 나스닥 거래소 상장 보통주 전체, 한국거래소 유가증권시장 상장 종목 전체의 시가총액 가중 가격지수입니다.</dd></div>
-      <div><dt>데이터</dt><dd>VIX·나스닥은 1990년부터, VXN은 2001년 1월부터, 코스피는 1996년 12월부터의 Yahoo Finance 일별 종가입니다. VKOSPI는 KRX Open API(한국거래소 공식 데이터 API) 인증키를 받으면 추가됩니다. 빈 날짜는 해당 시장의 휴장일입니다.</dd></div>
+      <div><dt>데이터</dt><dd>VIX·나스닥은 1990년부터, VXN은 2001년 1월부터, 코스피는 1996년 12월부터의 Yahoo Finance 일별 종가입니다. VKOSPI는 KRX Open API(한국거래소 공식 데이터 API)의 파생상품지수 시세정보로, API가 제공하는 2010년 1월 4일부터입니다(공식 발표 시작 2009-04-13 ~ 2009년 말은 빠짐). 빈 날짜는 해당 시장의 휴장일입니다.</dd></div>
     </dl>
   </section>
 </div>
