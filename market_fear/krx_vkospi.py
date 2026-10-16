@@ -34,6 +34,7 @@ KNOWN_CLOSES = {"2026-06-09": 91.23, "2026-06-29": 96.94}
 # VKOSPI 공식 발표는 2009-04-13부터지만, Open API는 2010-01-04부터 데이터를 준다
 # (2009년 날짜는 빈 OutBlock_1, 2026-10-16 확인). 이전 날짜는 요청하지 않음.
 FIRST_DAY = "2010-01-04"
+RETRIES = 4
 VKOSPI_NAME = "코스피200변동성지수"  # 응답 IDX_NM은 "코스피 200 변동성지수"
 
 
@@ -45,11 +46,26 @@ def is_vkospi(name):
 def fetch_day(session, api_key, day):
     """basDd 하루치 응답에서 VKOSPI 종가를 찾는다. 휴장일이면 None."""
     params = {"basDd": day.strftime("%Y%m%d")}
-    resp = session.get(API_URL, params=params, headers={"AUTH_KEY": api_key}, timeout=30)
-    if resp.status_code != 200:
-        # raise_for_status()는 URL을 메시지에 넣으므로 쓰지 않는다(키 노출 방지)
-        raise RuntimeError(f"KRX Open API {resp.status_code} ({day:%Y-%m-%d}): {resp.text[:200]}")
-    rows = resp.json().get("OutBlock_1") or []
+    for attempt in range(1, RETRIES + 1):
+        try:
+            resp = session.get(API_URL, params=params, headers={"AUTH_KEY": api_key}, timeout=30)
+        except requests.RequestException as e:
+            error = f"{type(e).__name__}"  # 예외 메시지에는 URL이 들어갈 수 있어 이름만 남긴다
+        else:
+            if resp.status_code in (401, 403):
+                raise RuntimeError(f"KRX Open API {resp.status_code} ({day:%Y-%m-%d}): {resp.text[:200]}")
+            # raise_for_status()는 URL을 메시지에 넣으므로 쓰지 않는다(키 노출 방지)
+            error = f"{resp.status_code}: {resp.text[:200]!r}"
+            if resp.status_code == 200:
+                try:
+                    rows = resp.json().get("OutBlock_1") or []
+                    break
+                except ValueError:  # 가끔 200인데 본문이 JSON이 아님 (2026-10-16 수집 중 1회)
+                    pass
+        print(f"  재시도 {attempt}/{RETRIES} ({day:%Y-%m-%d}): {error}")
+        time.sleep(2 ** attempt)
+    else:
+        raise RuntimeError(f"KRX Open API 응답 오류 ({day:%Y-%m-%d}): {error}")
     for row in rows:
         name_key = next((k for k in NAME_KEYS if k in row), None)
         if name_key and is_vkospi(row[name_key]):
@@ -81,6 +97,14 @@ def load_vkospi(start, end=None, api_key=None, cache=None, pause=0.05):
         days = days[days > cached.index.max()]
 
     fetched = {}
+
+    def merged():
+        parts = [x for x in (cached, pd.Series(fetched, name="VKOSPI", dtype=float)) if not x.empty]
+        series = pd.concat(parts).sort_index() if parts else cached
+        series = series[~series.index.duplicated(keep="last")]
+        series.index.name = "Date"
+        return series
+
     with requests.Session() as session:
         for i, day in enumerate(days, 1):
             value = fetch_day(session, api_key, day)
@@ -88,16 +112,14 @@ def load_vkospi(start, end=None, api_key=None, cache=None, pause=0.05):
                 fetched[day] = value
             if i % 100 == 0:
                 print(f"  {i}/{len(days)}일 조회 ({day:%Y-%m-%d})")
+                if cache:  # 중간 저장: 도중에 실패해도 다음 실행이 이어서 받는다
+                    merged().to_frame().to_csv(cache)
             time.sleep(pause)
 
-    parts = [x for x in (cached, pd.Series(fetched, name="VKOSPI", dtype=float)) if not x.empty]
-    series = pd.concat(parts).sort_index() if parts else cached
-    series = series[~series.index.duplicated(keep="last")]
-    series = series[series.index >= pd.Timestamp(start)]
-    series.index.name = "Date"
+    series = merged()
     if cache:
         series.to_frame().to_csv(cache)
-    return series
+    return series[series.index >= pd.Timestamp(start)]
 
 
 def verify(series):
