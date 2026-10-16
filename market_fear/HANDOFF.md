@@ -140,7 +140,7 @@ Dashboard 타입 Artifact이며, 내용은 Artifact의 자체 저장소 문서�
 ## 8. 남은 작업
 
 1. ~~VKOSPI 수집~~ **완료 (2026-10-16)**. `data/vkospi.csv`, `closes_long.csv`, `closes_5y.csv`에 VKOSPI 반영·커밋됨. 매일 갱신은 `python krx_vkospi.py --start 2010-01-04 --csv data/vkospi.csv`(캐시 이후 날짜만 요청) 후 `vix_nasdaq_kospi.py --vkospi`.
-   - GitHub Actions에서 VKOSPI를 받으려면 저장소 Secret `KRX_API_KEY` 등록 필요(2026-10-16 Actions 커밋은 VKOSPI 없이 Yahoo 데이터만 갱신됨 → 아직 미등록으로 보임).
+   - GitHub Actions에서 VKOSPI를 **새로** 받으려면 저장소 Secret `KRX_API_KEY` 등록 필요(2026-10-16 Actions 커밋은 VKOSPI 열 없이 CSV를 다시 써서 미등록으로 보임). Secret이 없어도 커밋된 `data/vkospi.csv`는 병합되도록 수정함(키 없으면 캐시만 사용).
    - 주의: Yahoo 코스피 마지막 행이 한국 장중이면 종가가 아님(2026-10-16 행은 장중 값).
 2. 대시보드: 새 `closes_long.csv`를 asset 업로드하고 `datasets/prices`를 update(§6). 설명(description)에서 "VKOSPI 대기" 문구를 바꾸고 출처(KRX Open API, 2010-01-04~)를 추가.
 3. 사용자 보고: VKOSPI 구간별 수익률, 현재 VKOSPI의 분위(2026-10-15 코스피 −7.6% 급락일 VKOSPI 55.38, 전날 44.91), VIX vs VKOSPI 2026년 6월 비교.

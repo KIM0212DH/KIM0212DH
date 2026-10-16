@@ -83,12 +83,16 @@ def fetch_day(session, api_key, day):
 def load_vkospi(start, end=None, api_key=None, cache=None, pause=0.05):
     """start~end 영업일의 VKOSPI 종가 Series. cache CSV가 있으면 그 이후 날짜만 받는다."""
     api_key = api_key or os.getenv("KRX_API_KEY")
-    if not api_key:
-        sys.exit("KRX_API_KEY 환경 변수가 없습니다 (openapi.krx.co.kr 인증키).")
-
     cached = pd.Series(dtype=float, name="VKOSPI")
     if cache and Path(cache).exists():
         cached = pd.read_csv(cache, index_col=0, parse_dates=True)["VKOSPI"]
+
+    if not api_key:
+        if cached.empty:
+            sys.exit("KRX_API_KEY 환경 변수가 없습니다 (openapi.krx.co.kr 인증키).")
+        # 키가 없으면 캐시만 쓴다 (예: Secret 없는 Actions 실행에서 VKOSPI 열이 사라지지 않게)
+        print(f"  KRX_API_KEY 없음: 캐시만 사용 (~{cached.index.max():%Y-%m-%d})")
+        return cached[cached.index >= pd.Timestamp(start)]
 
     start = max(pd.Timestamp(start), pd.Timestamp(FIRST_DAY))
     end = pd.Timestamp(end) if end else pd.Timestamp.today().normalize() - pd.Timedelta(days=1)

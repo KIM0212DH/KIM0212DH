@@ -29,11 +29,11 @@ jobs:
           KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
         run: |
           mkdir -p data
-          # 저장소 Secret KRX_API_KEY가 있을 때만 VKOSPI 포함
+          # Secret KRX_API_KEY가 있으면 VKOSPI를 새로 받고, 없어도 커밋된 캐시(data/vkospi.csv)는 병합
           VKOSPI_FLAG=""
-          if [ -n "$KRX_API_KEY" ]; then VKOSPI_FLAG="--vkospi"; fi
+          if [ -n "$KRX_API_KEY" ] || [ -f data/vkospi.csv ]; then VKOSPI_FLAG="--vkospi"; fi
           python vix_nasdaq_kospi.py --period 5y $VKOSPI_FLAG --csv data/closes_5y.csv --out data/vix_nasdaq_kospi.html
-          # 대시보드용 장기 데이터 (VIX·나스닥 1990~, 코스피 1996-12~, VKOSPI 2009-04~)
+          # 대시보드용 장기 데이터 (VIX·나스닥 1990~, 코스피 1996-12~, VKOSPI 2010-01~)
           python vix_nasdaq_kospi.py --start 1990-01-01 $VKOSPI_FLAG --csv data/closes_long.csv --out /tmp/long.html
       - name: Commit data
         run: |
