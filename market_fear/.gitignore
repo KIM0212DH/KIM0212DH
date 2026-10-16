@@ -1,0 +1,4 @@
+*.html
+*.csv
+__pycache__/
+!dashboard/index.html
