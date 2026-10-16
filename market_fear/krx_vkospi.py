@@ -7,6 +7,10 @@
 API: KRX Open API '파생상품지수 시세정보' (idx/drvprod_dd_trd)
     - 기준일(basDd, YYYYMMDD) 하나당 요청 1번, 그날의 파생상품지수 전체가 온다.
     - 전 거래일 데이터까지만 제공(실시간 아님), 매일 08:00 KST 무렵 갱신.
+    - 인증: AUTH_KEY 헤더. 서비스별 이용 신청 승인 전에는 모든 요청이 401.
+    - 응답: OutBlock_1[] 행마다 BAS_DD, IDX_CLSS, IDX_NM, CLSPRC_IDX, CMPPREVDD_IDX,
+      FLUC_RT, OPNPRC_IDX, HGPRC_IDX, LWPRC_IDX (VKOSPI는 IDX_CLSS "옵션지수").
+    - 데이터는 2010-01-04부터 제공.
     - 일일 호출 한도가 있으므로 --csv 캐시에 이미 있는 날짜는 다시 받지 않는다.
 
 VKOSPI: 한국거래소가 2009-04-13부터 공식 발표. 코스피200 옵션 가격으로 계산한
@@ -27,12 +31,15 @@ NAME_KEYS = ("IDX_NM", "IDX_NM_KOR")
 CLOSE_KEYS = ("CLSPRC_IDX", "CLSPRC", "TDD_CLSPRC")
 # 공식 발표값으로 검증 (2026-06-29: 공식 발표 이후 최고치)
 KNOWN_CLOSES = {"2026-06-09": 91.23, "2026-06-29": 96.94}
-FIRST_DAY = "2009-04-13"  # VKOSPI 공식 발표 시작일: 이전 날짜는 요청하지 않음
+# VKOSPI 공식 발표는 2009-04-13부터지만, Open API는 2010-01-04부터 데이터를 준다
+# (2009년 날짜는 빈 OutBlock_1, 2026-10-16 확인). 이전 날짜는 요청하지 않음.
+FIRST_DAY = "2010-01-04"
+VKOSPI_NAME = "코스피200변동성지수"  # 응답 IDX_NM은 "코스피 200 변동성지수"
 
 
 def is_vkospi(name):
-    name = name.replace(" ", "")
-    return "변동성" in name and "200" in name
+    # 정확히 일치해야 함: "코스피 200 현선물 목표변동성 24% 지수" 등 비슷한 이름이 같은 응답에 있음
+    return name.replace(" ", "") == VKOSPI_NAME
 
 
 def fetch_day(session, api_key, day):
